@@ -1,0 +1,49 @@
+﻿<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="QuickRun" verbose="1">
+  <listeners>
+    <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
+    <listener class-name="listeners.TestListener"/>
+  </listeners>
+
+  <test name="Chrome-Test">
+    <parameter name="browser" value="chrome"/>
+    <classes>
+      <class name="tests.basic.MusicPlayTest"/>
+    </classes>
+  </test>
+
+  <test name="Firefox-Test">
+    <parameter name="browser" value="firefox"/>
+    <classes>
+      <class name="tests.basic.MusicPlayTest"/>
+    </classes>
+  </test>
+
+  <test name="Edge-Test">
+    <parameter name="browser" value="edge"/>
+    <classes>
+      <class name="tests.basic.MusicPlayTest"/>
+    </classes>
+  </test>
+
+  <test name="Chrome-Headless-Test">
+    <parameter name="browser" value="chrome"/>
+    <parameter name="headless" value="false"/>
+    <classes>
+      <class name="tests.basic.MusicPlayTest"/>
+    </classes>
+  </test>
+
+  <!-- New Regression Tests block -->
+  <test name="Regression Tests">
+    <groups>
+      <run>
+        <include name="${groups}"/>
+      </run>
+    </groups>
+    <packages>
+      <package name="tests.basic"/>
+    </packages>
+  </test>
+
+</suite>

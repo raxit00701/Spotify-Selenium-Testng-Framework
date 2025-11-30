@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>selenium-testng-framework</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <name>Selenium TestNG Framework</name>
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+
+        <!-- dependency versions (update as needed) -->
+        <selenium.version>4.38.0</selenium.version>
+        <testng.version>7.11.0</testng.version>
+        <allure.testng.version>2.31.0</allure.testng.version>
+        <opencsv.version>5.12.0</opencsv.version>
+        <monte.version>0.7.7.0</monte.version>
+        <slf4j.version>2.0.17</slf4j.version> <!-- example; use latest stable 2.0.x -->
+        <log4j2.version>2.20.0</log4j2.version> <!-- example; update as needed -->
+        <surefire.plugin.version>3.5.3</surefire.plugin.version>
+    </properties>
+
+    <dependencies>
+        <!-- Selenium Java -->
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <version>${selenium.version}</version>
+        </dependency>
+
+        <!-- TestNG -->
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>${testng.version}</version>
+
+        </dependency>
+
+        <!-- Allure TestNG adapter -->
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-testng</artifactId>
+            <version>${allure.testng.version}</version>
+        </dependency>
+
+        <!-- CSV driven support (OpenCSV) -->
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>${opencsv.version}</version>
+        </dependency>
+
+        <!-- Monte Screen Recorder for test video capture -->
+        <dependency>
+            <groupId>com.github.stephenc.monte</groupId>
+            <artifactId>monte-screen-recorder</artifactId>
+            <version>${monte.version}</version>
+        </dependency>
+
+        <!-- Logging: SLF4J API + Log4j2 binding -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
+        <!-- Log4j2 implementation & SLF4J binding to Log4j2 -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>
+        <!-- SLF4J -> Log4j2 binding -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j2-impl</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>
+
+        <!-- (Optional) Useful extras -->
+        <!-- Apache Commons IO (for file ops) -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.13.0</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+
+            <!-- Surefire plugin: runs tests, configure parallel execution here -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire.plugin.version}</version>
+                <configuration>
+                    <!-- If using TestNG suite xml place file here, otherwise use TestNG parallel params -->
+                    <!-- Example: run using testng.xml (recommended for complex parallelization) -->
+                    <suiteXmlFiles>
+                        <suiteXmlFile>testng.xml</suiteXmlFile>
+                    </suiteXmlFiles>
+
+                    <!-- Alternatively, you can set TestNG parallel mode and threads here.
+                         When using TestNG annotations you may prefer to control parallel in testng.xml -->
+                    <parallel>classes</parallel>
+                    <threadCount>8</threadCount>
+                    <forkCount>1</forkCount>
+                    <reuseForks>true</reuseForks>
+
+                    <!-- pass environment properties if needed -->
+                    <systemPropertyVariables>
+                        <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+
+            <!-- Allure report plugin (generates report from allure-results) -->
+            <plugin>
+                <groupId>io.qameta.allure</groupId>
+                <artifactId>allure-maven</artifactId>
+                <version>2.11.2</version>
+                <configuration>
+                    <reportVersion>2.31.0</reportVersion>
+                </configuration>
+            </plugin>
+
+            <!-- (Optional) Failsafe plugin for integration tests if you separate them -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.0.0-M8</version>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- CI profile: reduce stdout, increase threadCount, or enable other CI-friendly options -->
+        <profile>
+            <id>ci</id>
+            <properties>
+                <threadCount.ci>16</threadCount.ci>
+            </properties>
+        </profile>
+    </profiles>
+
+</project>

@@ -5,7 +5,6 @@ import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvValidationException;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -15,31 +14,43 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Enhanced CSV Utility class for TestNG DataProviders
- * Supports both file system and classpath resources
- *perfectly in parallel runs*
+ * CSV Utility class for TestNG DataProviders
+ * Reads CSV files ONLY from:
+ * C:\Users\raxit\IdeaProjects\selenium2\src\test\resources
+ *
+ * Safe for IntelliJ, TestNG, Maven, CI, and parallel runs
  */
 public final class CSVUtils {
 
-    private CSVUtils() { /* utility class - prevent instantiation */ }
+    private CSVUtils() {
+        /* utility class - prevent instantiation */
+    }
 
     /**
-     * Reads a CSV file from the filesystem
+     * Base directory for all CSV files
+     */
+    private static final Path TEST_RESOURCES_DIR =
+            Paths.get("C:/Users/raxit/IdeaProjects/selenium2/src/test/resources");
+
+    /**
+     * Reads a CSV file from the fixed test resources directory
      *
-     * @param pathStr     Absolute or relative path to CSV file
-     * @param skipHeader  true to skip first row
+     * @param fileName   CSV file name or subpath (e.g. "login.csv", "data/users.csv")
+     * @param skipHeader true to skip first row
      * @return List of String[] (each array = one row)
      */
-    public static List<String[]> readCsv(String pathStr, boolean skipHeader) {
-        Path path = Paths.get(pathStr);
+    public static List<String[]> readResourceCsv(String fileName, boolean skipHeader) {
+
+        Path csvPath = TEST_RESOURCES_DIR.resolve(fileName).normalize();
         List<String[]> data = new ArrayList<>();
 
-        if (!Files.exists(path)) {
-            System.err.println("[CSVUtils] File not found: " + path.toAbsolutePath());
-            return data;
+        if (!Files.exists(csvPath)) {
+            throw new IllegalArgumentException(
+                    "[CSVUtils] CSV file not found: " + csvPath
+            );
         }
 
-        try (Reader reader = Files.newBufferedReader(path);
+        try (Reader reader = Files.newBufferedReader(csvPath, StandardCharsets.UTF_8);
              CSVReader csvReader = new CSVReaderBuilder(reader).build()) {
 
             String[] row;
@@ -50,72 +61,31 @@ public final class CSVUtils {
                     isFirstRow = false;
                     continue;
                 }
-
                 data.add(trimRow(row));
                 isFirstRow = false;
             }
 
-            System.out.println("[CSVUtils] Loaded " + data.size() + " data rows from file: " + path.getFileName());
+            System.out.println("[CSVUtils] Loaded " + data.size() +
+                    " rows from: " + csvPath.getFileName());
+
+            return data;
 
         } catch (IOException | CsvValidationException e) {
-            System.err.println("[CSVUtils] Error reading CSV file: " + pathStr + " | " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        return data;
-    }
-
-    /**
-     * Reads a CSV file from src/test/resources (recommended for tests)
-     * Works reliably in IDE, Maven, Gradle, and parallel execution
-     *
-     * @param resourceFileName e.g. "login.csv", "users/signup-data.csv"
-     * @param skipHeader       true to skip header row
-     * @return List of trimmed String arrays
-     */
-    public static List<String[]> readResourceCsv(String resourceFileName, boolean skipHeader) {
-        try (Reader reader = new InputStreamReader(
-                CSVUtils.class.getClassLoader().getResourceAsStream(resourceFileName),
-                StandardCharsets.UTF_8);
-             CSVReader csvReader = new CSVReaderBuilder(reader).build()) {
-
-            if (reader == null) {
-                throw new IllegalArgumentException("Resource not found: " + resourceFileName +
-                        " — Make sure file is in src/test/resources");
-            }
-
-            List<String[]> data = new ArrayList<>();
-            String[] row;
-            boolean isFirstRow = true;
-
-            while ((row = csvReader.readNext()) != null) {
-                if (skipHeader && isFirstRow) {
-                    isFirstRow = false;
-                    continue;
-                }
-                data.add(trimRow(row));
-                isFirstRow = false;
-            }
-
-            System.out.println("[CSVUtils] Loaded " + data.size() + " data rows from resource: " + resourceFileName);
-            return data;
-
-        } catch (Exception e) {
-            System.err.println("[CSVUtils] Failed to load resource CSV: " + resourceFileName);
-            e.printStackTrace();
-            return new ArrayList<>();
+            throw new RuntimeException(
+                    "[CSVUtils] Failed to read CSV: " + csvPath, e
+            );
         }
     }
 
     /**
-     * Directly returns Object[][] ready for @DataProvider (most convenient!)
+     * Directly returns Object[][] ready for TestNG @DataProvider
      *
-     * @param resourceFileName CSV in src/test/resources
-     * @param skipHeader       true to skip header
+     * @param fileName   CSV file name or subpath
+     * @param skipHeader true to skip header row
      * @return Object[][] for TestNG DataProvider
      */
-    public static Object[][] readResourceCsvToDataProvider(String resourceFileName, boolean skipHeader) {
-        List<String[]> rows = readResourceCsv(resourceFileName, skipHeader);
+    public static Object[][] readResourceCsvToDataProvider(String fileName, boolean skipHeader) {
+        List<String[]> rows = readResourceCsv(fileName, skipHeader);
         Object[][] result = new Object[rows.size()][];
         for (int i = 0; i < rows.size(); i++) {
             result[i] = rows.get(i);
